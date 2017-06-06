@@ -4,14 +4,19 @@ using PyBluez (with Python 2).
 """
 
 import bluetooth
+from emotion_classifier import *
 
-serverMACAddress = 'b8:27:eb:4a:eb:76'
-port = 3
+
+serverMACAddress = 'B8:27:EB:B5:14:89'
+port = 10
 s = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+s.settimeout(20)
 s.connect((serverMACAddress, port))
 while 1:
-    text = raw_input() # Note change to the old (Python 2) raw_input
+    print("starting")
+    text = get_emotion()# raw_input() # Note change to the old (Python 2) raw_input
+    print(text)
     if text == "quit":
-    break
+        break
     s.send(text)
 sock.close()
