@@ -5,6 +5,8 @@ import numpy as np
 import os
 import subprocess
 import xgboost as xgb
+import pickle
+
 
 FILE_FOLDER = "recorded_tracks/"
 EMOTION_DICT = {0: "neutral", 1:"happy", 2:"sad", 3: "angry"}
@@ -14,7 +16,7 @@ FILENAME = "recorded_tracks/file.wav"
 import pyaudio
 import wave
  
-def record_audio(s = 6):
+def record_audio(s = 4):
     FORMAT = pyaudio.paInt16
     CHANNELS = 2
     RATE = 44100
@@ -170,17 +172,35 @@ def get_wav_file_paths(folder_path):
                filter(lambda a: ".wav" in str(a), subprocess.check_output(['ls', folder_path]).splitlines())))
 
 
-def get_emotion():
-    record_audio()
-    X = process_wav_file(FILENAME)
-    print(X)
+def get_emotion(l = [], filename=FILENAME):
+    if len(l) >= 2:
+        os.system("open %s"%(l[1]))
+        filename = l[1]
+        record_audio()
+    loaded_model = pickle.load(open("xgboost_82_acc.pickle", "rb"))
+    FILENAME2 = "recorded_tracks/file2.wav"
+    if filename == FILENAME:
+        #os.system("rm %s"%(FILENAME2))
+        record_audio()
+    
+        #os.system('ffmpeg -i %s -af "highpass=f=200, lowpass=f=4000" %s'%(filename, FILENAME2))
+        #filename = FILENAME2
+
+        #print("ciao")
+    X = process_wav_file(filename)
+    #print(X)
     xg_test = xgb.DMatrix(X, label=np.array([0]))
     #xg_test = X
     y = loaded_model.predict(xg_test)#[0]
-    print(y)
+    print("========= Confidence =========")
+    print("Prob Neutral: %2f"%(y[0][0]))
+    print("Prob Happy: %2f"%(y[0][1]))
+    print("Prob Sad: %2f"%(y[0][2]))
+    print("Prob Angry: %2f"%(y[0][3]))
     #emotion = EMOTION_DICT[y[0]]
 
     emotion = EMOTION_DICT[np.argmax(y)]
+    
     return emotion
 
 
@@ -202,31 +222,35 @@ if __name__ == "__main__":
     
 
     while True:
-        if len(sys.argv) > 1:
-            X = process_wav_file(sys.argv[1])
-            print(X)
-            xg_test = xgb.DMatrix(X, label=np.array([0]))
-            #xg_test = X#xgb.DMatrix(X, label=np.array([0]))
+        os.system("open %s"%(sys.argv[1]))
 
-            y = loaded_model.predict(xg_test)#[0]
-            print(y)
-            print(loaded_model.predict_proba(xg_test))
-            emotion = EMOTION_DICT[np.argmax(y)]
+        if len(sys.argv) > 1:
+            os.system("open %s"%(sys.argv[1]))
+
+            # X = process_wav_file(sys.argv[1])
+            # print(X)
+            # xg_test = xgb.DMatrix(X, label=np.array([0]))
+            # #xg_test = X#xgb.DMatrix(X, label=np.array([0]))
+
+            # y = loaded_model.predict(xg_test)#[0]
+            # print(y)
+            # print(loaded_model.predict_proba(xg_test))
+            emotion = get_emotion(filename=sys.argv[1])#EMOTION_DICT[np.argmax(y)]
             #emotion = EMOTION_DICT[y[0]]
             #print(s.duration, s.samplerate)
             print("RESULTS: ", emotion)
             break
         else:
-            record_audio()
-            X = process_wav_file(FILENAME)
-            print(X)
-            xg_test = xgb.DMatrix(X, label=np.array([0]))
-            #xg_test = X
-            y = loaded_model.predict(xg_test)#[0]
-            print(y)
+            # record_audio()
+            # X = process_wav_file(FILENAME)
+            # print(X)
+            # xg_test = xgb.DMatrix(X, label=np.array([0]))
+            # #xg_test = X
+            # y = loaded_model.predict(xg_test)#[0]
+            # print(y)
             #emotion = EMOTION_DICT[y[0]]
 
-            emotion = EMOTION_DICT[np.argmax(y)]
+            emotion = get_emotion()#EMOTION_DICT[np.argmax(y)]
             #emotion = EMOTION_DICT[y]
             #print(s.duration, s.samplerate)
             print("RESULTS: ", emotion)
